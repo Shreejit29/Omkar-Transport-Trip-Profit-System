@@ -19,9 +19,8 @@ material = st.text_input("Material")
 rate = st.number_input("Rate per Tonne", min_value=0.0)
 weight = st.number_input("Weight (Tonnes)", min_value=0.0)
 
-total_freight = rate * weight
-
-st.write(f"### Total Freight: ₹ {total_freight:.2f}")
+total_fare = rate * weight
+st.write(f"### Total Fare: ₹ {total_fare:.2f}")
 
 # -----------------------
 # Payment Section
@@ -43,15 +42,13 @@ driver = st.number_input("Driver Charges", min_value=0.0)
 other = st.number_input("Other Expenses", min_value=0.0)
 
 total_expenses = diesel + toll + food + driver + other
-
 st.write(f"### Total Expenses: ₹ {total_expenses:.2f}")
 
 # -----------------------
 # Profit
 # -----------------------
-profit = total_freight - total_expenses
-
-st.write(f"# ✅ Profit: ₹ {profit:.2f}")
+profit = total_fare - total_expenses
+st.write(f"# ✅ Net Profit: ₹ {profit:.2f}")
 
 # -----------------------
 # Upload Bills
@@ -60,9 +57,14 @@ st.header("Upload Bill Photos")
 
 uploaded_files = st.file_uploader(
     "Upload multiple bill images",
-    type=["jpg", "png", "jpeg"],
+    type=["jpg", "jpeg", "png"],
     accept_multiple_files=True
 )
+
+# Clean file name
+safe_source = source.replace(" ", "_")
+safe_destination = destination.replace(" ", "_")
+file_base = f"{trip_date}_{safe_source}_{safe_destination}"
 
 # -----------------------
 # Generate Reports
@@ -70,7 +72,7 @@ uploaded_files = st.file_uploader(
 if st.button("Generate Word Report"):
     file = generate_word(
         trip_date, source, destination, material,
-        rate, weight, total_freight,
+        rate, weight, total_fare,
         advance, pending_payment,
         diesel, toll, food, driver, other,
         total_expenses, profit
@@ -78,13 +80,13 @@ if st.button("Generate Word Report"):
     st.download_button(
         "Download Word Report",
         file,
-        file_name="Trip_Report.docx"
+        file_name=f"{file_base}.docx"
     )
 
 if st.button("Generate PDF Report"):
     file = generate_pdf(
         trip_date, source, destination, material,
-        rate, weight, total_freight,
+        rate, weight, total_fare,
         advance, pending_payment,
         diesel, toll, food, driver, other,
         total_expenses, profit,
@@ -93,5 +95,5 @@ if st.button("Generate PDF Report"):
     st.download_button(
         "Download PDF Report",
         file,
-        file_name="Trip_Report.pdf"
+        file_name=f"{file_base}.pdf"
     )
