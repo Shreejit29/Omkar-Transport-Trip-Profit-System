@@ -1,113 +1,112 @@
-from docx import Document
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from io import BytesIO
+import streamlit as st
+from datetime import date
+from word_generator import generate_word
+from pdf_generator import generate_pdf
 
+st.set_page_config(page_title="Omkar Transport Profit System")
 
-def add_table_borders(table):
-    for row in table.rows:
-        for cell in row.cells:
-            tc = cell._tc
-            tcPr = tc.get_or_add_tcPr()
-            tcBorders = OxmlElement('w:tcBorders')
+st.title("🚛 Omkar Transport - Trip Profit Calculator")
 
-            for border_name in ('top', 'left', 'bottom', 'right'):
-                border = OxmlElement(f'w:{border_name}')
-                border.set(qn('w:val'), 'single')
-                border.set(qn('w:sz'), '4')
-                border.set(qn('w:space'), '0')
-                border.set(qn('w:color'), '000000')
-                tcBorders.append(border)
+# -----------------------
+# Trip Details
+# -----------------------
+st.header("Trip Details")
 
-            tcPr.append(tcBorders)
+trip_date = st.date_input("Date of Trip", date.today())
+source = st.text_input("Source")
+destination = st.text_input("Destination")
+material = st.text_input("Material")
+rate = st.number_input("Rate per Tonne", min_value=0.0)
+weight = st.number_input("Weight (Tonnes)", min_value=0.0)
 
+total_fare = rate * weight
+st.write(f"### Total Fare: ₹ {total_fare:.2f}")
 
-def generate_word(trip_date, source, destination, material,
-                  rate, weight, total_fare,
-                  advance, pending_payment,
-                  diesel, toll, food, driver, other,
-                  total_expenses, profit):
+# -----------------------
+# Payment Section
+# -----------------------
+st.header("Payment Details")
 
-    doc = Document()
-    doc.add_heading("Omkar Transport - Trip Report", level=1)
+advance = st.number_input("Advance Received", min_value=0.0)
+pending_payment = st.number_input("Pending Payment", min_value=0.0)
 
-    # ---------------- Trip Details ----------------
-    trip_data = [
-        ["Sr. No.", "Particular", "Value"],
-        ["1", "Date", str(trip_date)],
-        ["2", "Source", source],
-        ["3", "Destination", destination],
-        ["4", "Material", material],
-        ["5", "Rate per Tonne", f"₹ {rate:.2f}"],
-        ["6", "Weight", f"{weight:.2f} Tonnes"],
-        ["7", "Total Fare", f"₹ {total_fare:.2f}"],
-    ]
+# -----------------------
+# Expenses
+# -----------------------
+st.header("Trip Expenses")
 
-    table = doc.add_table(rows=len(trip_data), cols=3)
-    for i, row in enumerate(trip_data):
-        for j, cell in enumerate(row):
-            table.rows[i].cells[j].text = cell
+diesel = st.number_input("Diesel Expense", min_value=0.0)
+toll = st.number_input("Toll Expense", min_value=0.0)
+food = st.number_input("Food Expense", min_value=0.0)
+driver = st.number_input("Driver Charges", min_value=0.0)
 
-    add_table_borders(table)
+# Optional Other Expenses
+st.subheader("Other Expenses (Optional)")
 
-    # ---------------- Payment ----------------
-    doc.add_heading("Payment Details", level=2)
+if "other_expenses" not in st.session_state:
+    st.session_state.other_expenses = []
 
-    payment_data = [
-        ["Sr. No.", "Particular", "Amount"],
-        ["1", "Advance Received", f"₹ {advance:.2f}"],
-        ["2", "Pending Payment", f"₹ {pending_payment:.2f}"],
-    ]
+if st.button("➕ Add Other Expense"):
+    st.session_state.other_expenses.append({"name": "", "amount": 0.0})
 
-    table = doc.add_table(rows=len(payment_data), cols=3)
-    for i, row in enumerate(payment_data):
-        for j, cell in enumerate(row):
-            table.rows[i].cells[j].text = cell
+for i, expense in enumerate(st.session_state.other_expenses):
+    col1, col2 = st.columns(2)
+    with col1:
+        expense["name"] = st.text_input(f"Expense Name {i+1}", key=f"name_{i}")
+    with col2:
+        expense["amount"] = st.number_input(f"Amount {i+1}", min_value=0.0, key=f"amount_{i}")
 
-    add_table_borders(table)
+# Calculate total other expenses
+other_total = sum(e["amount"] for e in st.session_state.other_expenses)
 
-    # ---------------- Expenses ----------------
-    doc.add_heading("Expense Details", level=2)
+total_expenses = diesel + toll + food + driver + other_total
 
-    expense_data = [
-        ["Sr. No.", "Expense Type", "Amount"],
-        ["1", "Diesel", f"₹ {diesel:.2f}"],
-        ["2", "Toll", f"₹ {toll:.2f}"],
-        ["3", "Food", f"₹ {food:.2f}"],
-        ["4", "Driver Charges", f"₹ {driver:.2f}"],
-        ["5", "Other", f"₹ {other:.2f}"],
-        ["6", "Total Expenses", f"₹ {total_expenses:.2f}"],
-    ]
+st.write(f"### Total Expenses: ₹ {total_expenses:.2f}")
 
-    table = doc.add_table(rows=len(expense_data), cols=3)
-    for i, row in enumerate(expense_data):
-        for j, cell in enumerate(row):
-            table.rows[i].cells[j].text = cell
+# -----------------------
+# Profit
+# -----------------------
+profit = total_fare - total_expenses
+st.write(f"# ✅ Net Profit: ₹ {profit:.2f}")
 
-    add_table_borders(table)
+# -----------------------
+# Upload Bills
+# -----------------------
+st.header("Upload Bill Photos")
 
-    # ---------------- Summary ----------------
-    doc.add_heading("Final Summary", level=2)
+uploaded_files = st.file_uploader(
+    "Upload multiple bill images",
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=True
+)
 
-    summary_data = [
-        ["Sr. No.", "Particular", "Amount"],
-        ["1", "Total Fare", f"₹ {total_fare:.2f}"],
-        ["2", "Total Expenses", f"₹ {total_expenses:.2f}"],
-        ["3", "Net Profit", f"₹ {profit:.2f}"],
-        ["4", "Advance Received", f"₹ {advance:.2f}"],
-        ["5", "Pending Payment", f"₹ {pending_payment:.2f}"],
-    ]
+# Clean file name
+safe_source = source.replace(" ", "_")
+safe_destination = destination.replace(" ", "_")
+file_base = f"{trip_date}_{safe_source}_{safe_destination}"
 
-    table = doc.add_table(rows=len(summary_data), cols=3)
-    for i, row in enumerate(summary_data):
-        for j, cell in enumerate(row):
-            table.rows[i].cells[j].text = cell
+# -----------------------
+# Generate Reports
+# -----------------------
+if st.button("Generate Word Report"):
+    file = generate_word(
+        trip_date, source, destination, material,
+        rate, weight, total_fare,
+        advance, pending_payment,
+        diesel, toll, food, driver,
+        st.session_state.other_expenses,
+        total_expenses, profit
+    )
+    st.download_button("Download Word Report", file, file_name=f"{file_base}.docx")
 
-    add_table_borders(table)
-
-    doc.add_paragraph("\nSignature: _______________________")
-
-    buffer = BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
+if st.button("Generate PDF Report"):
+    file = generate_pdf(
+        trip_date, source, destination, material,
+        rate, weight, total_fare,
+        advance, pending_payment,
+        diesel, toll, food, driver,
+        st.session_state.other_expenses,
+        total_expenses, profit,
+        uploaded_files
+    )
+    st.download_button("Download PDF Report", file, file_name=f"{file_base}.pdf")
