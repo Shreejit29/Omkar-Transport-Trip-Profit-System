@@ -10,38 +10,37 @@ def add_table_borders(table):
             tc = cell._tc
             tcPr = tc.get_or_add_tcPr()
             tcBorders = OxmlElement('w:tcBorders')
-
             for border_name in ('top', 'left', 'bottom', 'right'):
                 border = OxmlElement(f'w:{border_name}')
                 border.set(qn('w:val'), 'single')
                 border.set(qn('w:sz'), '4')
-                border.set(qn('w:space'), '0')
                 border.set(qn('w:color'), '000000')
                 tcBorders.append(border)
-
             tcPr.append(tcBorders)
 
 
-def generate_word(trip_date, source, destination, material,
-                  rate, weight, total_fare,
+def generate_word(trip_date,
+                  s1, d1, m1, r1, w1, f1,
+                  s2, d2, m2, r2, w2, f2,
+                  total_fare,
                   advance, pending_payment,
                   diesel, toll, food, driver,
                   other_expenses,
                   total_expenses, profit):
 
     doc = Document()
-    doc.add_heading("Omkar Transport - Trip Report", level=1)
+    doc.add_heading("Omkar Transport - Round Trip Report", level=1)
 
-    # ---------------- Trip Details ----------------
     trip_data = [
         ["Sr. No.", "Particular", "Value"],
         ["1", "Date", str(trip_date)],
-        ["2", "Source", source],
-        ["3", "Destination", destination],
-        ["4", "Material", material],
-        ["5", "Rate per Tonne", f"₹ {rate:.2f}"],
-        ["6", "Weight", f"{weight:.2f} Tonnes"],
-        ["7", "Total Fare", f"₹ {total_fare:.2f}"],
+        ["2", "Journey 1 Route", f"{s1} → {d1}"],
+        ["3", "Material 1", m1],
+        ["4", "Fare 1", f"₹ {f1:.2f}"],
+        ["5", "Journey 2 Route", f"{s2} → {d2}"],
+        ["6", "Material 2", m2],
+        ["7", "Fare 2", f"₹ {f2:.2f}"],
+        ["8", "Total Round Trip Fare", f"₹ {total_fare:.2f}"],
     ]
 
     table = doc.add_table(rows=len(trip_data), cols=3)
@@ -50,22 +49,6 @@ def generate_word(trip_date, source, destination, material,
             table.rows[i].cells[j].text = cell
     add_table_borders(table)
 
-    # ---------------- Payment Details ----------------
-    doc.add_heading("Payment Details", level=2)
-
-    payment_data = [
-        ["Sr. No.", "Particular", "Amount"],
-        ["1", "Advance Received", f"₹ {advance:.2f}"],
-        ["2", "Pending Payment", f"₹ {pending_payment:.2f}"],
-    ]
-
-    table = doc.add_table(rows=len(payment_data), cols=3)
-    for i, row in enumerate(payment_data):
-        for j, cell in enumerate(row):
-            table.rows[i].cells[j].text = cell
-    add_table_borders(table)
-
-    # ---------------- Expense Details ----------------
     doc.add_heading("Expense Details", level=2)
 
     expense_data = [
@@ -76,16 +59,13 @@ def generate_word(trip_date, source, destination, material,
         ["4", "Driver Charges", f"₹ {driver:.2f}"],
     ]
 
-    sr_no = 5
+    sr = 5
+    for e in other_expenses:
+        if e["name"]:
+            expense_data.append([str(sr), e["name"], f"₹ {e['amount']:.2f}"])
+            sr += 1
 
-    for expense in other_expenses:
-        if expense["name"]:
-            expense_data.append(
-                [str(sr_no), expense["name"], f"₹ {expense['amount']:.2f}"]
-            )
-            sr_no += 1
-
-    expense_data.append([str(sr_no), "Total Expenses", f"₹ {total_expenses:.2f}"])
+    expense_data.append([str(sr), "Total Expenses", f"₹ {total_expenses:.2f}"])
 
     table = doc.add_table(rows=len(expense_data), cols=3)
     for i, row in enumerate(expense_data):
@@ -93,25 +73,22 @@ def generate_word(trip_date, source, destination, material,
             table.rows[i].cells[j].text = cell
     add_table_borders(table)
 
-    # ---------------- Final Summary ----------------
     doc.add_heading("Final Summary", level=2)
 
-    summary_data = [
+    summary = [
         ["Sr. No.", "Particular", "Amount"],
-        ["1", "Total Fare", f"₹ {total_fare:.2f}"],
+        ["1", "Total Round Trip Fare", f"₹ {total_fare:.2f}"],
         ["2", "Total Expenses", f"₹ {total_expenses:.2f}"],
         ["3", "Net Profit", f"₹ {profit:.2f}"],
         ["4", "Advance Received", f"₹ {advance:.2f}"],
         ["5", "Pending Payment", f"₹ {pending_payment:.2f}"],
     ]
 
-    table = doc.add_table(rows=len(summary_data), cols=3)
-    for i, row in enumerate(summary_data):
+    table = doc.add_table(rows=len(summary), cols=3)
+    for i, row in enumerate(summary):
         for j, cell in enumerate(row):
             table.rows[i].cells[j].text = cell
     add_table_borders(table)
-
-    doc.add_paragraph("\nSignature: _______________________")
 
     buffer = BytesIO()
     doc.save(buffer)
