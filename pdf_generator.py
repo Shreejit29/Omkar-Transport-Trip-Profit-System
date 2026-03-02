@@ -7,7 +7,7 @@ from io import BytesIO
 
 
 def styled_table(data):
-    table = Table(data, colWidths=[60, 200, 150])
+    table = Table(data, colWidths=[60, 220, 150])
     table.setStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
@@ -16,7 +16,7 @@ def styled_table(data):
 
 
 def generate_pdf(trip_date, source, destination, material,
-                 rate, weight, total_freight,
+                 rate, weight, total_fare,
                  advance, pending_payment,
                  diesel, toll, food, driver, other,
                  total_expenses, profit,
@@ -30,6 +30,7 @@ def generate_pdf(trip_date, source, destination, material,
     elements.append(Paragraph("<b>Omkar Transport - Trip Report</b>", styles['Title']))
     elements.append(Spacer(1, 20))
 
+    # Trip Table
     trip_data = [
         ["Sr. No.", "Particular", "Value"],
         ["1", "Date", str(trip_date)],
@@ -38,21 +39,21 @@ def generate_pdf(trip_date, source, destination, material,
         ["4", "Material", material],
         ["5", "Rate per Tonne", f"₹ {rate:.2f}"],
         ["6", "Weight", f"{weight:.2f} Tonnes"],
-        ["7", "Total Freight", f"₹ {total_freight:.2f}"],
+        ["7", "Total Fare", f"₹ {total_fare:.2f}"],
     ]
-
     elements.append(styled_table(trip_data))
     elements.append(Spacer(1, 20))
 
+    # Payment Table
     payment_data = [
         ["Sr. No.", "Particular", "Amount"],
         ["1", "Advance Received", f"₹ {advance:.2f}"],
         ["2", "Pending Payment", f"₹ {pending_payment:.2f}"],
     ]
-
     elements.append(styled_table(payment_data))
     elements.append(Spacer(1, 20))
 
+    # Expense Table
     expense_data = [
         ["Sr. No.", "Expense Type", "Amount"],
         ["1", "Diesel", f"₹ {diesel:.2f}"],
@@ -62,24 +63,25 @@ def generate_pdf(trip_date, source, destination, material,
         ["5", "Other", f"₹ {other:.2f}"],
         ["6", "Total Expenses", f"₹ {total_expenses:.2f}"],
     ]
-
     elements.append(styled_table(expense_data))
     elements.append(Spacer(1, 20))
 
-    profit_data = [
-        ["Sr. No.", "Description", "Amount"],
-        ["1", "Total Freight", f"₹ {total_freight:.2f}"],
+    # Summary Table
+    summary_data = [
+        ["Sr. No.", "Particular", "Amount"],
+        ["1", "Total Fare", f"₹ {total_fare:.2f}"],
         ["2", "Total Expenses", f"₹ {total_expenses:.2f}"],
         ["3", "Net Profit", f"₹ {profit:.2f}"],
+        ["4", "Advance Received", f"₹ {advance:.2f}"],
+        ["5", "Pending Payment", f"₹ {pending_payment:.2f}"],
     ]
-
-    elements.append(styled_table(profit_data))
+    elements.append(styled_table(summary_data))
     elements.append(Spacer(1, 20))
 
+    # Bill Images
     if uploaded_files:
         elements.append(Paragraph("<b>Bill Attachments</b>", styles['Heading2']))
         elements.append(Spacer(1, 10))
-
         for file in uploaded_files:
             img = Image(file, width=4 * inch, height=4 * inch)
             elements.append(img)
