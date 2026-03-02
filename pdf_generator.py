@@ -18,7 +18,8 @@ def styled_table(data):
 def generate_pdf(trip_date, source, destination, material,
                  rate, weight, total_fare,
                  advance, pending_payment,
-                 diesel, toll, food, driver, other,
+                 diesel, toll, food, driver,
+                 other_expenses,
                  total_expenses, profit,
                  uploaded_files):
 
@@ -30,7 +31,7 @@ def generate_pdf(trip_date, source, destination, material,
     elements.append(Paragraph("<b>Omkar Transport - Trip Report</b>", styles['Title']))
     elements.append(Spacer(1, 20))
 
-    # Trip Table
+    # ---------------- Trip Details ----------------
     trip_data = [
         ["Sr. No.", "Particular", "Value"],
         ["1", "Date", str(trip_date)],
@@ -41,32 +42,44 @@ def generate_pdf(trip_date, source, destination, material,
         ["6", "Weight", f"{weight:.2f} Tonnes"],
         ["7", "Total Fare", f"₹ {total_fare:.2f}"],
     ]
+
     elements.append(styled_table(trip_data))
     elements.append(Spacer(1, 20))
 
-    # Payment Table
+    # ---------------- Payment Details ----------------
     payment_data = [
         ["Sr. No.", "Particular", "Amount"],
         ["1", "Advance Received", f"₹ {advance:.2f}"],
         ["2", "Pending Payment", f"₹ {pending_payment:.2f}"],
     ]
+
     elements.append(styled_table(payment_data))
     elements.append(Spacer(1, 20))
 
-    # Expense Table
+    # ---------------- Expense Details ----------------
     expense_data = [
         ["Sr. No.", "Expense Type", "Amount"],
         ["1", "Diesel", f"₹ {diesel:.2f}"],
         ["2", "Toll", f"₹ {toll:.2f}"],
         ["3", "Food", f"₹ {food:.2f}"],
         ["4", "Driver Charges", f"₹ {driver:.2f}"],
-        ["5", "Other", f"₹ {other:.2f}"],
-        ["6", "Total Expenses", f"₹ {total_expenses:.2f}"],
     ]
+
+    sr_no = 5
+
+    for expense in other_expenses:
+        if expense["name"]:
+            expense_data.append(
+                [str(sr_no), expense["name"], f"₹ {expense['amount']:.2f}"]
+            )
+            sr_no += 1
+
+    expense_data.append([str(sr_no), "Total Expenses", f"₹ {total_expenses:.2f}"])
+
     elements.append(styled_table(expense_data))
     elements.append(Spacer(1, 20))
 
-    # Summary Table
+    # ---------------- Final Summary ----------------
     summary_data = [
         ["Sr. No.", "Particular", "Amount"],
         ["1", "Total Fare", f"₹ {total_fare:.2f}"],
@@ -75,13 +88,15 @@ def generate_pdf(trip_date, source, destination, material,
         ["4", "Advance Received", f"₹ {advance:.2f}"],
         ["5", "Pending Payment", f"₹ {pending_payment:.2f}"],
     ]
+
     elements.append(styled_table(summary_data))
     elements.append(Spacer(1, 20))
 
-    # Bill Images
+    # ---------------- Bill Attachments ----------------
     if uploaded_files:
         elements.append(Paragraph("<b>Bill Attachments</b>", styles['Heading2']))
         elements.append(Spacer(1, 10))
+
         for file in uploaded_files:
             img = Image(file, width=4 * inch, height=4 * inch)
             elements.append(img)
