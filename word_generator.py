@@ -1,5 +1,4 @@
 from docx import Document
-from docx.shared import Pt
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from io import BytesIO
@@ -24,7 +23,7 @@ def add_table_borders(table):
 
 
 def generate_word(trip_date, source, destination, material,
-                  rate, weight, total_freight,
+                  rate, weight, total_fare,
                   advance, pending_payment,
                   diesel, toll, food, driver, other,
                   total_expenses, profit):
@@ -32,7 +31,7 @@ def generate_word(trip_date, source, destination, material,
     doc = Document()
     doc.add_heading("Omkar Transport - Trip Report", level=1)
 
-    # ---------------- TRIP DETAILS TABLE ----------------
+    # ---------------- Trip Details ----------------
     trip_data = [
         ["Sr. No.", "Particular", "Value"],
         ["1", "Date", str(trip_date)],
@@ -41,16 +40,17 @@ def generate_word(trip_date, source, destination, material,
         ["4", "Material", material],
         ["5", "Rate per Tonne", f"₹ {rate:.2f}"],
         ["6", "Weight", f"{weight:.2f} Tonnes"],
-        ["7", "Total Freight", f"₹ {total_freight:.2f}"],
+        ["7", "Total Fare", f"₹ {total_fare:.2f}"],
     ]
 
     table = doc.add_table(rows=len(trip_data), cols=3)
-    for row_idx, row in enumerate(trip_data):
-        for col_idx, cell in enumerate(row):
-            table.rows[row_idx].cells[col_idx].text = cell
+    for i, row in enumerate(trip_data):
+        for j, cell in enumerate(row):
+            table.rows[i].cells[j].text = cell
 
     add_table_borders(table)
 
+    # ---------------- Payment ----------------
     doc.add_heading("Payment Details", level=2)
 
     payment_data = [
@@ -60,12 +60,13 @@ def generate_word(trip_date, source, destination, material,
     ]
 
     table = doc.add_table(rows=len(payment_data), cols=3)
-    for row_idx, row in enumerate(payment_data):
-        for col_idx, cell in enumerate(row):
-            table.rows[row_idx].cells[col_idx].text = cell
+    for i, row in enumerate(payment_data):
+        for j, cell in enumerate(row):
+            table.rows[i].cells[j].text = cell
 
     add_table_borders(table)
 
+    # ---------------- Expenses ----------------
     doc.add_heading("Expense Details", level=2)
 
     expense_data = [
@@ -79,25 +80,28 @@ def generate_word(trip_date, source, destination, material,
     ]
 
     table = doc.add_table(rows=len(expense_data), cols=3)
-    for row_idx, row in enumerate(expense_data):
-        for col_idx, cell in enumerate(row):
-            table.rows[row_idx].cells[col_idx].text = cell
+    for i, row in enumerate(expense_data):
+        for j, cell in enumerate(row):
+            table.rows[i].cells[j].text = cell
 
     add_table_borders(table)
 
-    doc.add_heading("Profit Summary", level=2)
+    # ---------------- Summary ----------------
+    doc.add_heading("Final Summary", level=2)
 
-    profit_data = [
-        ["Sr. No.", "Description", "Amount"],
-        ["1", "Total Freight", f"₹ {total_freight:.2f}"],
+    summary_data = [
+        ["Sr. No.", "Particular", "Amount"],
+        ["1", "Total Fare", f"₹ {total_fare:.2f}"],
         ["2", "Total Expenses", f"₹ {total_expenses:.2f}"],
         ["3", "Net Profit", f"₹ {profit:.2f}"],
+        ["4", "Advance Received", f"₹ {advance:.2f}"],
+        ["5", "Pending Payment", f"₹ {pending_payment:.2f}"],
     ]
 
-    table = doc.add_table(rows=len(profit_data), cols=3)
-    for row_idx, row in enumerate(profit_data):
-        for col_idx, cell in enumerate(row):
-            table.rows[row_idx].cells[col_idx].text = cell
+    table = doc.add_table(rows=len(summary_data), cols=3)
+    for i, row in enumerate(summary_data):
+        for j, cell in enumerate(row):
+            table.rows[i].cells[j].text = cell
 
     add_table_borders(table)
 
